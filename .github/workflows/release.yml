@@ -1,0 +1,77 @@
+name: Release to Maven Central
+
+# Trigger on version tags:  git tag v2.0.0 && git push --tags
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-*"   # pre-release e.g. v2.1.0-rc1
+
+jobs:
+  release:
+    name: Publish to Maven Central
+    runs-on: ubuntu-latest
+
+    environment: maven-central   # protect secrets behind a GitHub Environment
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17 (LTS baseline for publishing)
+        uses: actions/setup-java@v4
+        with:
+          java-version: 17
+          distribution: temurin
+          cache: maven
+
+      # ── GPG setup ──────────────────────────────────────────────────────────
+      # Store your ASCII-armoured private key in repo secret GPG_PRIVATE_KEY
+      # and the passphrase in GPG_PASSPHRASE.
+      - name: Import GPG signing key
+        uses: crazy-max/ghaction-import-gpg@v6
+        with:
+          gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+          passphrase: ${{ secrets.GPG_PASSPHRASE }}
+
+      # ── Maven Central credentials ──────────────────────────────────────────
+      # Create a User Token at https://central.sonatype.com → Account → User Token
+      # Store username in MAVEN_CENTRAL_TOKEN_USERNAME and password in
+      # MAVEN_CENTRAL_TOKEN_PASSWORD.
+      - name: Write Maven settings.xml
+        run: |
+          mkdir -p ~/.m2
+          cat > ~/.m2/settings.xml <<'XML'
+          <settings>
+            <servers>
+              <server>
+                <id>central</id>
+                <username>${env.MAVEN_CENTRAL_TOKEN_USERNAME}</username>
+                <password>${env.MAVEN_CENTRAL_TOKEN_PASSWORD}</password>
+              </server>
+            </servers>
+          </settings>
+          XML
+
+      - name: Run full test suite before publishing
+        run: mvn -B verify -P java-17 --no-transfer-progress
+
+      - name: Deploy to Maven Central
+        env:
+          MAVEN_CENTRAL_TOKEN_USERNAME: ${{ secrets.MAVEN_CENTRAL_TOKEN_USERNAME }}
+          MAVEN_CENTRAL_TOKEN_PASSWORD: ${{ secrets.MAVEN_CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          mvn -B deploy \
+              -P release,java-17 \
+              -DskipTests \
+              --no-transfer-progress \
+              -Dgpg.passphrase="${MAVEN_GPG_PASSPHRASE}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            target/*.jar
+            target/*.pom

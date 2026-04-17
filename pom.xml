@@ -5,24 +5,45 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.yamatrireddy</groupId>
-    <artifactId>rsql-parser-java-21</artifactId>
-    <version>1.0.0</version>
+    <artifactId>rsql-parser</artifactId>
+    <version>2.0.0</version>
     <packaging>jar</packaging>
 
     <name>RSQL Parser</name>
-    <description>A lightweight Java library for parsing RSQL expressions into an AST.</description>
+    <description>A secure, enterprise-grade Java library for parsing RSQL/FIQL filter expressions
+        into an Abstract Syntax Tree (AST). Supports Java 17, 21, 25, and 26 with JPMS module
+        support, visitor pattern, configurable security limits, and zero mandatory dependencies.</description>
     <url>https://github.com/yamatrireddy/rsql-parser-java-21</url>
+    <inceptionYear>2024</inceptionYear>
 
     <properties>
-        <java.version>8</java.version>
+        <!-- Default baseline — override with a profile or -Djava.version=21 -->
+        <java.version>17</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <!-- Dependency versions -->
+        <slf4j.version>2.0.17</slf4j.version>
+        <junit.version>5.12.2</junit.version>
+        <mockito.version>5.17.0</mockito.version>
+        <assertj.version>3.27.3</assertj.version>
+
+        <!-- Plugin versions -->
+        <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
+        <maven.surefire.plugin.version>3.5.3</maven.surefire.plugin.version>
+        <maven.source.plugin.version>3.3.1</maven.source.plugin.version>
+        <maven.javadoc.plugin.version>3.11.2</maven.javadoc.plugin.version>
+        <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
+        <central.publishing.plugin.version>0.7.0</central.publishing.plugin.version>
+        <flatten.plugin.version>1.7.0</flatten.plugin.version>
     </properties>
 
     <licenses>
         <license>
             <name>MIT License</name>
-            <url>https://www.opensource.org/licenses/mit-license.php</url>
+            <url>https://opensource.org/licenses/MIT</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
 
@@ -31,6 +52,7 @@
             <id>yamatrireddy</id>
             <name>Yamatri Reddy</name>
             <email>yamatri.tiss.nussd@gmail.com</email>
+            <url>https://github.com/yamatrireddy</url>
         </developer>
     </developers>
 
@@ -41,110 +63,199 @@
         <tag>HEAD</tag>
     </scm>
 
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>https://github.com/yamatrireddy/rsql-parser-java-21/issues</url>
+    </issueManagement>
+
     <dependencies>
+        <!-- SLF4J API — consumers supply their own implementation (Logback, Log4j2, etc.) -->
         <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.42</version>
-            <scope>provided</scope>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Logging implementation for tests only -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
-
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.14.0</version>
+                <version>${maven.compiler.plugin.version}</version>
                 <configuration>
                     <release>${maven.compiler.release}</release>
+                    <showWarnings>true</showWarnings>
+                    <showDeprecation>true</showDeprecation>
+                    <compilerArgs>
+                        <arg>-Xlint:all</arg>
+                        <arg>-Xlint:-processing</arg>
+                    </compilerArgs>
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>${maven.surefire.plugin.version}</version>
+                <configuration>
+                    <argLine>
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy=ALL-UNNAMED
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy.api=ALL-UNNAMED
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy.ast=ALL-UNNAMED
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy.lexer=ALL-UNNAMED
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy.optimizer=ALL-UNNAMED
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy.security=ALL-UNNAMED
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy.visitor=ALL-UNNAMED
+                        --add-opens io.github.yamatrireddy.rsql/io.github.yamatrireddy.exception=ALL-UNNAMED
+                    </argLine>
+                </configuration>
+            </plugin>
+            <!-- CI-friendly flattened POM for published artifacts -->
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>flatten-maven-plugin</artifactId>
+                <version>${flatten.plugin.version}</version>
+                <configuration>
+                    <updatePomFile>true</updatePomFile>
+                    <flattenMode>resolveCiFriendliesOnly</flattenMode>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>flatten</id>
+                        <phase>process-resources</phase>
+                        <goals><goal>flatten</goal></goals>
+                    </execution>
+                    <execution>
+                        <id>flatten.clean</id>
+                        <phase>clean</phase>
+                        <goals><goal>clean</goal></goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
 
     <profiles>
+        <!-- ═══════════════ Java-version profiles ═══════════════ -->
+        <profile>
+            <id>java-17</id>
+            <properties><java.version>17</java.version></properties>
+        </profile>
+        <profile>
+            <id>java-21</id>
+            <properties><java.version>21</java.version></properties>
+        </profile>
+        <profile>
+            <id>java-25</id>
+            <properties><java.version>25</java.version></properties>
+        </profile>
+        <profile>
+            <id>java-26</id>
+            <properties><java.version>26</java.version></properties>
+        </profile>
+
+        <!-- ═══════════════ Release profile ═══════════════
+             Activate with: mvn deploy -P release
+             Requires: GPG key + Maven Central token in ~/.m2/settings.xml
+             ═══════════════════════════════════════════════ -->
         <profile>
             <id>release</id>
             <build>
                 <plugins>
+                    <!-- 1. Sources JAR -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.3.1</version>
+                        <version>${maven.source.plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
+                                <goals><goal>jar-no-fork</goal></goals>
                             </execution>
                         </executions>
                     </plugin>
+
+                    <!-- 2. Javadoc JAR -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.11.2</version>
+                        <version>${maven.javadoc.plugin.version}</version>
+                        <configuration>
+                            <release>${maven.compiler.release}</release>
+                            <doclint>all,-missing</doclint>
+                            <quiet>true</quiet>
+                            <failOnError>false</failOnError>
+                        </configuration>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
+                                <goals><goal>jar</goal></goals>
                             </execution>
                         </executions>
                     </plugin>
+
+                    <!-- 3. GPG signing (loopback mode works in CI with GNUPGHOME set) -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>3.2.8</version>
+                        <version>${maven.gpg.plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
                                 <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
+                                <goals><goal>sign</goal></goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
                             </execution>
                         </executions>
                     </plugin>
+
+                    <!-- 4. Sonatype Central Publishing (new portal, replaces legacy OSSRH) -->
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central.publishing.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <!-- Matches <server id="central"> in ~/.m2/settings.xml -->
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                        </configuration>
+                    </plugin>
                 </plugins>
             </build>
-        </profile>
-        <profile>
-            <id>java-8</id>
-            <properties>
-                <java.version>8</java.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>java-11</id>
-            <properties>
-                <java.version>11</java.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>java-17</id>
-            <properties>
-                <java.version>17</java.version>
-            </properties>
-        </profile>
-        <profile>
-            <id>java-21</id>
-            <properties>
-                <java.version>21</java.version>
-            </properties>
         </profile>
     </profiles>
 </project>
