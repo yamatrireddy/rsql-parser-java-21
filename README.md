@@ -300,4 +300,4 @@ mvn package -DskipTests
 
 ## License
 
-MIT License © 2024 Yamatri Reddy. See [LICENSE](LICENSE) for details.
+MIT License © 2026 Yamatri Reddy. See [LICENSE](LICENSE) for details.
