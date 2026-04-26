@@ -14,6 +14,7 @@ A secure, enterprise-grade Java library for parsing [RSQL/FIQL](https://github.c
 - **Zero mandatory runtime dependencies** — only `slf4j-api` (consumers provide the logging implementation)
 - **Immutable, sealed AST** — `ComparisonNode` and `LogicalNode` are final and thread-safe
 - **Visitor pattern** — implement `AstVisitor<T>` to translate an AST into SQL, MongoDB queries, Elasticsearch filters, etc.
+- **Built-in MongoDB support** — `MongoDbQueryBuilder` translates RSQL to MongoDB `Bson` filters (Java Driver 5.x / MongoDB 8.x)
 - **Configurable security limits** — max depth, value length, wildcard count, input length, and allowed operators are all tunable via `ParserConfig`
 - **Flexible field validation** — built-in `FieldRegistry` factories (`allowAll`, `allowList`, `allowPattern`) or supply your own
 - **Precise error messages** — `RSQLParseException` includes character-position and original input
@@ -60,6 +61,24 @@ Add a SLF4J implementation to your runtime (if you don't already have one):
 
 ```groovy
 implementation 'io.github.yamatrireddy:rsql-parser:2.0.0'
+```
+
+#### MongoDB support (optional)
+
+If you plan to use `MongoDbQueryBuilder`, also add the MongoDB Java Driver:
+
+```xml
+<!-- Maven -->
+<dependency>
+    <groupId>org.mongodb</groupId>
+    <artifactId>mongodb-driver-sync</artifactId>
+    <version>5.3.0</version>
+</dependency>
+```
+
+```groovy
+// Gradle
+implementation 'org.mongodb:mongodb-driver-sync:5.3.0'
 ```
 
 ---
@@ -164,6 +183,94 @@ RSQLParser parser = RSQLParser.builder()
 
 ---
 
+## MongoDB Integration (Java Driver 5.x / MongoDB 8.x)
+
+`MongoDbQueryBuilder` is a built-in `AstVisitor<Bson>` that translates RSQL expressions
+directly to MongoDB filter documents. It requires the optional `mongodb-driver-core`
+dependency (see [Installation](#installation)).
+
+### Basic usage
+
+```java
+RSQLParser parser = new RSQLParser(FieldRegistry.allowAll());
+MongoDbQueryBuilder builder = new MongoDbQueryBuilder();
+
+Bson filter = parser.parse("name==Alice;age>=18").accept(builder);
+// Equivalent to: { $and: [ { name: "Alice" }, { age: { $gte: 18 } } ] }
+collection.find(filter).forEach(doc -> System.out.println(doc.toJson()));
+```
+
+### Operator mapping
+
+| RSQL | Named alias | MongoDB filter |
+|------|-------------|----------------|
+| `==` | — | `$eq` (wildcard `*` → `$regex`) |
+| `!=` | — | `$ne` |
+| `>`  | `=gt=` | `$gt` |
+| `>=` | `=ge=` | `$gte` |
+| `<`  | `=lt=` | `$lt` |
+| `<=` | `=le=` | `$lte` |
+| `=in=` | — | `$in` |
+| `=out=` | — | `$nin` |
+
+### MongoDB-specific extended operators
+
+Add `MongoDbOperators.ALL_OPERATORS` to `ParserConfig` to unlock MongoDB-native operators:
+
+```java
+ParserConfig config = ParserConfig.builder()
+        .allowedOperators(MongoDbOperators.ALL_OPERATORS)
+        .build();
+
+RSQLParser parser = RSQLParser.builder()
+        .fieldRegistry(FieldRegistry.allowList("name","email","tags","age","status","deletedAt"))
+        .config(config)
+        .build();
+
+MongoDbQueryBuilder builder = new MongoDbQueryBuilder();
+```
+
+| RSQL | MongoDB | Example |
+|------|---------|---------|
+| `=regex=` | `$regex` | `name=regex=^Alice/i` |
+| `=exists=` | `$exists` | `email=exists=true` |
+| `=all=` | `$all` | `tags=all=(java,spring)` |
+| `=size=` | `$size` | `tags=size=3` |
+| `=type=` | `$type` | `age=type=int` |
+
+### Automatic value type inference
+
+String values from RSQL are automatically promoted to the most appropriate Java/BSON type:
+
+| Value | Inferred type |
+|-------|---------------|
+| `42` | `Integer` |
+| `9876543210` | `Long` |
+| `3.14` | `Double` |
+| `true` / `false` | `Boolean` |
+| `null` | `null` |
+| `2024-01-15T10:30:00Z` | `java.util.Date` (UTC) |
+| `507f1f77bcf86cd799439011` | `ObjectId` |
+| anything else | `String` |
+
+### Wildcard to regex
+
+The `==` operator automatically converts wildcard values to case-insensitive regex:
+
+```
+name==Alice*   → { name: { $regex: "^Alice.*$", $options: "i" } }
+name==*Smith   → { name: { $regex: "^.*Smith$", $options: "i" } }
+name==*ali*    → { name: { $regex: "^.*ali.*$", $options: "i" } }
+```
+
+Use `=regex=` for full control over the pattern and flags:
+
+```
+name=regex=^alice/i   → { name: { $regex: "^alice", $options: "i" } }
+```
+
+---
+
 ## Writing a Custom Visitor
 
 Implement `AstVisitor<T>` to translate the AST into any target representation:
@@ -217,6 +324,32 @@ RSQLException  (RuntimeException)
 ├── RSQLParseException    — syntax error; carries position and original input
 └── RSQLValidationException — security/semantic violation
 ```
+
+---
+
+## Examples
+
+The [`examples/`](examples/) directory contains runnable Java programs covering every use-case:
+
+| Example | What it shows |
+|---------|---------------|
+| [`BasicUsageExample`](examples/src/main/java/examples/BasicUsageExample.java) | Parse expressions, inspect AST, all operators, quoted & wildcard values |
+| [`FieldValidationExample`](examples/src/main/java/examples/FieldValidationExample.java) | `allowAll`, `allowList`, `allowPattern`, `denyAll`, combined & custom registries |
+| [`SecurityConfigExample`](examples/src/main/java/examples/SecurityConfigExample.java) | All security limits, operator restrictions, production config |
+| [`CustomVisitorExample`](examples/src/main/java/examples/CustomVisitorExample.java) | SQL WHERE clause visitor, Elasticsearch bool query visitor |
+| [`MongoDbIntegrationExample`](examples/src/main/java/examples/MongoDbIntegrationExample.java) | Full MongoDB 8.x integration — basic filters, wildcards, type inference, extended operators |
+| [`ErrorHandlingExample`](examples/src/main/java/examples/ErrorHandlingExample.java) | Syntax errors with positions, validation errors, production exception handling |
+| [`AstInspectionExample`](examples/src/main/java/examples/AstInspectionExample.java) | Pattern matching, field extraction, depth counter, tree pretty-printer |
+| [`AdvancedFeaturesExample`](examples/src/main/java/examples/AdvancedFeaturesExample.java) | Multi-tenant fields, expression caching, canonical round-trip, in-memory predicate |
+
+```bash
+cd examples
+mvn compile
+mvn exec:java -Dexec.mainClass=examples.BasicUsageExample
+mvn exec:java -Dexec.mainClass=examples.MongoDbIntegrationExample
+```
+
+See [`examples/README.md`](examples/README.md) for the full guide.
 
 ---
 
