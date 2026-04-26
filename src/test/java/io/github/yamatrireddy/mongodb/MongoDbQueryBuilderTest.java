@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 @DisplayName("MongoDbQueryBuilder")
 class MongoDbQueryBuilderTest {
@@ -33,14 +34,6 @@ class MongoDbQueryBuilderTest {
 
     private Bson parse(String rsql) {
         return parser.parse(rsql).accept(builder);
-    }
-
-    private Document doc(Bson bson) {
-        return bson.toBsonDocument(Document.class,
-                com.mongodb.MongoClientSettings.getDefaultCodecRegistry()).toMap()
-                .entrySet()
-                .stream()
-                .collect(Document::new, (d, e) -> d.put(e.getKey(), e.getValue()), Document::putAll);
     }
 
     private String render(Bson bson) {
@@ -87,7 +80,7 @@ class MongoDbQueryBuilderTest {
         void eqWildcard() {
             Bson filter = parse("name==Alice*");
             String json = render(filter);
-            assertThat(json).contains("$regex").contains("Alice");
+            assertThat(json).contains("$regularExpression").contains("Alice");
         }
 
         @Test
@@ -245,7 +238,7 @@ class MongoDbQueryBuilderTest {
         @DisplayName("=regex= produces $regex without flags")
         void regex() {
             Bson filter = extParser.parse("name=regex=^Alice").accept(builder);
-            assertThat(render(filter)).contains("$regex").contains("Alice");
+            assertThat(render(filter)).contains("$regularExpression").contains("Alice");
         }
 
         @Test
@@ -253,7 +246,7 @@ class MongoDbQueryBuilderTest {
         void regexWithFlags() {
             Bson filter = extParser.parse("name=regex=^alice/i").accept(builder);
             String json = render(filter);
-            assertThat(json).contains("$regex");
+            assertThat(json).contains("$regularExpression");
             assertThat(json).contains("alice");
         }
 

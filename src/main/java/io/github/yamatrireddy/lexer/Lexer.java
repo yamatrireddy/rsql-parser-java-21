@@ -69,6 +69,15 @@ public final class Lexer {
         if (match("=lt="))  return op("<",     4);
         if (match("=le="))  return op("<=",    4);
         if (match("=="))    return op("==",    2);
+        // Generic custom operator: =<one-or-more-letters>= (e.g. =regex=, =exists=)
+        if (c == '=') {
+            int i = pos + 1;
+            while (i < input.length() && Character.isLetter(input.charAt(i))) i++;
+            if (i > pos + 1 && i < input.length() && input.charAt(i) == '=') {
+                String opStr = input.substring(pos, i + 1);
+                return op(opStr, opStr.length());
+            }
+        }
         if (match("!="))    return op("!=",    2);
         if (match(">="))    return op(">=",    2);
         if (match("<="))    return op("<=",    2);
