@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>io.github.yamatrireddy.examples</groupId>
+    <artifactId>rsql-parser-examples</artifactId>
+    <version>1.0.0</version>
+    <packaging>jar</packaging>
+
+    <name>RSQL Parser — Examples</name>
+    <description>Runnable examples demonstrating every use-case of the rsql-parser library,
+        including basic parsing, field validation, security config, custom visitors,
+        MongoDB integration, error handling, and advanced AST inspection.</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <maven.compiler.release>${java.version}</maven.compiler.release>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <rsql.parser.version>2.0.0</rsql.parser.version>
+        <mongodb.driver.version>5.3.0</mongodb.driver.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <logback.version>1.5.18</logback.version>
+    </properties>
+
+    <dependencies>
+        <!-- Core RSQL parser library -->
+        <dependency>
+            <groupId>io.github.yamatrireddy</groupId>
+            <artifactId>rsql-parser</artifactId>
+            <version>${rsql.parser.version}</version>
+        </dependency>
+
+        <!--
+            MongoDB Java Driver — required for MongoDbIntegrationExample.
+            Includes mongodb-driver-core (Filters, Bson) and bson transitively.
+        -->
+        <dependency>
+            <groupId>org.mongodb</groupId>
+            <artifactId>mongodb-driver-sync</artifactId>
+            <version>${mongodb.driver.version}</version>
+        </dependency>
+
+        <!-- Logging implementation -->
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+            <version>${logback.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.14.0</version>
+                <configuration>
+                    <release>${maven.compiler.release}</release>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>
