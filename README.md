@@ -2,7 +2,7 @@
 
 A secure, enterprise-grade Java library for parsing [RSQL/FIQL](https://github.com/jirutka/rsql-parser) filter expressions into an immutable Abstract Syntax Tree (AST).
 
-[![CI](https://github.com/yamatrireddy/rsql-parser-java-21/actions/workflows/ci.yml/badge.svg)](https://github.com/yamatrireddy/rsql-parser-java-21/actions/workflows/ci.yml)
+[![CI](https://github.com/yamatrireddy/rsql-fiql-parser/actions/workflows/ci.yml/badge.svg)](https://github.com/yamatrireddy/rsql-fiql-parser/actions/workflows/ci.yml)
 [![Maven Central](https://img.shields.io/maven-central/v/io.github.yamatrireddy/rsql-parser)](https://central.sonatype.com/artifact/io.github.yamatrireddy/rsql-parser)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Java 17+](https://img.shields.io/badge/Java-17%20%7C%2021%20%7C%2025%20%7C%2026-blue)](https://adoptium.net/)
