@@ -23,12 +23,19 @@ module io.github.yamatrireddy.rsql {
 
     requires org.slf4j;
 
+    // MongoDB Java Driver — optional; only needed when using MongoDbQueryBuilder.
+    // With 'requires static', the module loads fine without the driver at runtime;
+    // a NoClassDefFoundError is thrown only if MongoDbQueryBuilder is actually used.
+    requires static org.mongodb.driver.core;
+    requires static org.mongodb.bson;
+
     // Public API surface
     exports io.github.yamatrireddy.api;
     exports io.github.yamatrireddy.ast;
     exports io.github.yamatrireddy.visitor;
     exports io.github.yamatrireddy.exception;
     exports io.github.yamatrireddy.security;
+    exports io.github.yamatrireddy.mongodb;
 
     // Internal packages deliberately NOT exported:
     //   io.github.yamatrireddy        (Parser)
