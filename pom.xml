@@ -13,7 +13,7 @@
     <description>A secure, enterprise-grade Java library for parsing RSQL/FIQL filter expressions
         into an Abstract Syntax Tree (AST). Supports Java 17, 21, 25, and 26 with JPMS module
         support, visitor pattern, configurable security limits, and zero mandatory dependencies.</description>
-    <url>https://github.com/yamatrireddy/rsql-parser-java-21</url>
+    <url>https://github.com/yamatrireddy/rsql-fiql-parser</url>
     <inceptionYear>2024</inceptionYear>
 
     <properties>
@@ -58,15 +58,15 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/yamatrireddy/rsql-parser-java-21.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:yamatrireddy/rsql-parser-java-21.git</developerConnection>
-        <url>https://github.com/yamatrireddy/rsql-parser-java-21</url>
+        <connection>scm:git:git://github.com/yamatrireddy/rsql-fiql-parser.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:yamatrireddy/rsql-fiql-parser.git</developerConnection>
+        <url>https://github.com/yamatrireddy/rsql-fiql-parser</url>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub Issues</system>
-        <url>https://github.com/yamatrireddy/rsql-parser-java-21/issues</url>
+        <url>https://github.com/yamatrireddy/rsql-fiql-parser/issues</url>
     </issueManagement>
 
     <dependencies>
