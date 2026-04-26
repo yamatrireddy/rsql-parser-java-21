@@ -45,7 +45,7 @@ public final class MongoDbOperators {
 
     /**
      * Regular expression match — maps to {@code $regex}.
-     * <br>Value format: {@code pattern} or {@code pattern/flags} (e.g., {@code alice.*/i}).
+     * <br>Value format: {@code pattern} or {@code pattern/flags} (e.g., {@code alice.*}{@literal /i}).
      * <br>Example: {@code name=regex=^Alice}
      */
     public static final String REGEX = "=regex=";
